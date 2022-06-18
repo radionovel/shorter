@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+
+Route::get('/links', [App\Http\Controllers\LinksController::class, 'list']);
+Route::post('/links', [App\Http\Controllers\LinksController::class, 'store']);
+
+Route::get('/links/{id}', [App\Http\Controllers\LinksController::class, 'link']);
+
+Route::patch('/links/{id}', [App\Http\Controllers\LinksController::class, 'patch']);
+
+Route::delete('/links/{id}', [App\Http\Controllers\LinksController::class, 'delete']);
