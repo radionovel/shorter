@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\Repositories\LinksRepositoryInterface;
+use App\Contracts\Services\LinksServiceInterface;
+use App\Repositories\LinksRepository;
+use App\Services\LinksService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(LinksRepositoryInterface::class, LinksRepository::class);
+        $this->app->bind(LinksServiceInterface::class, LinksService::class);
     }
 
     /**
