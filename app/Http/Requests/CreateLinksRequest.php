@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\DTO\CreateLinkDto;
 use App\DTO\CreateLinksCollection;
-use App\DTO\LinksCollection;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -13,6 +12,10 @@ use Illuminate\Foundation\Http\FormRequest;
 class CreateLinksRequest extends FormRequest
 {
 
+    /**
+     * @return CreateLinksCollection
+     * @throws \Spatie\DataTransferObject\Exceptions\UnknownProperties
+     */
     public function links(): CreateLinksCollection
     {
         $links = [];

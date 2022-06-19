@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Repositories\LinksRepositoryInterface;
+use App\Contracts\Repositories\LinkViewsRepositoryInterface;
 use App\Contracts\Services\LinksServiceInterface;
+use App\DTO\CreateLinkViewDto;
 use App\Http\Requests\CreateLinksRequest;
 use App\Http\Requests\LinksRequest;
 use App\Http\Requests\PatchLinksRequest;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class LinksController extends Controller
 {
@@ -28,7 +34,7 @@ class LinksController extends Controller
      */
     public function store(CreateLinksRequest $request, LinksServiceInterface $linksService): JsonResponse
     {
-        if($linksService->storeCollection($request->links())){
+        if ($linksService->storeCollection($request->links())) {
             return response()->json([], 201);
         }
 
@@ -52,8 +58,8 @@ class LinksController extends Controller
      */
     public function link(int $id): JsonResponse
     {
-        $links = $this->linksRepository->find($id);
-        return response()->json($links);
+        $link = $this->linksRepository->find($id);
+        return response()->json($link);
     }
 
     /**
@@ -74,5 +80,25 @@ class LinksController extends Controller
     {
         $this->linksRepository->delete($id);
         return response()->json([], 204);
+    }
+
+    /**
+     * @param string $code
+     * @param Request $request
+     * @param LinkViewsRepositoryInterface $linkViewsRepository
+     * @return RedirectResponse
+     * @throws UnknownProperties
+     */
+    public function go(string $code, Request $request, LinkViewsRepositoryInterface $linkViewsRepository): RedirectResponse
+    {
+        $link = $this->linksRepository->findByCode($code);
+        $linkViewsRepository->storeView(new CreateLinkViewDto([
+            'link_id' => $link->id,
+            'user_id' => hash('sha3-256', $request->ip() . $request->userAgent()),
+            'view_date' => Carbon::now()->toDate(),
+            'user_ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]));
+        return response()->redirectTo($link->long_url);
     }
 }

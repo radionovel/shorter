@@ -10,9 +10,16 @@ use App\DTO\LinksCollection;
 interface LinksRepositoryInterface
 {
     public function storeLink(CreateLinkDto $createLink): LinkDto;
+
     public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection;
+
     public function list(array $filter);
+
     public function delete(int $id);
-    public function find(int $id);
+
+    public function find(int $id): LinkDto;
+
+    public function findByCode(string $code): LinkDto;
+
     public function update(int $id, array $attributes);
 }

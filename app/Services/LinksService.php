@@ -6,6 +6,7 @@ use App\Contracts\Repositories\LinksRepositoryInterface;
 use App\Contracts\Services\LinksServiceInterface;
 use App\DTO\CreateLinkDto;
 use App\DTO\CreateLinksCollection;
+use App\DTO\LinksCollection;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -27,19 +28,17 @@ class LinksService implements LinksServiceInterface
     }
 
     /**
-     * @param string $url
-     * @return bool
+     * @param CreateLinksCollection $createLinksCollection
+     * @return LinksCollection|false
      * @throws GuzzleException
      */
-    protected function isCorrectUrl(string $url): bool
+    public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection|bool
     {
-        try {
-            $this->httpClient->get($url);
-        } catch (ClientException $_) {
-            return false;
+        if ($this->canStoreLinkCollection($createLinksCollection)) {
+            return $this->linksRepository->storeCollection($createLinksCollection);
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -60,16 +59,18 @@ class LinksService implements LinksServiceInterface
     }
 
     /**
-     * @param CreateLinksCollection $createLinksCollection
-     * @return \App\DTO\LinksCollection|false
+     * @param string $url
+     * @return bool
      * @throws GuzzleException
      */
-    public function storeCollection(CreateLinksCollection $createLinksCollection): \App\DTO\LinksCollection|bool
+    protected function isCorrectUrl(string $url): bool
     {
-        if ($this->canStoreLinkCollection($createLinksCollection)) {
-            return $this->linksRepository->storeCollection($createLinksCollection);
+        try {
+            $this->httpClient->get($url);
+        } catch (ClientException $_) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 }

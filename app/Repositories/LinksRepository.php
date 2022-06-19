@@ -12,6 +12,7 @@ use App\Models\Tag;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
+use Throwable;
 
 class LinksRepository implements LinksRepositoryInterface
 {
@@ -19,7 +20,7 @@ class LinksRepository implements LinksRepositoryInterface
      * @param int $id
      * @param array $attributes
      * @return void
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function update(int $id, array $attributes)
     {
@@ -33,53 +34,6 @@ class LinksRepository implements LinksRepositoryInterface
         }
 
         $link->updateOrFail($attributes);
-    }
-
-    /**
-     * @param int $id
-     * @return LinkDto
-     * @throws UnknownProperties
-     */
-    public function find(int $id)
-    {
-        /** @var Link $link */
-        $link = Link::findOrFail($id);
-        return $link->dto($this->parseTags($link->tags));
-    }
-
-    /**
-     * @param int $id
-     * @return void
-     */
-    public function delete(int $id)
-    {
-        Link::find($id)->delete();
-    }
-
-    /**
-     * @param Collection $tags
-     * @return array
-     */
-    private function parseTags(Collection $tags): array
-    {
-        return $tags->pluck('tag')->all();
-    }
-
-    /**
-     * @param array $filter
-     * @return Collection
-     */
-    public function list(array $filter): Collection
-    {
-        $links = Link::filter($filter)
-            ->with('tags')
-            ->get();
-        $collection = new Collection();
-        foreach ($links as $link) {
-            $collection->add($link->dto($this->parseTags($link->tags)));
-        }
-
-        return $collection;
     }
 
     /**
@@ -100,6 +54,82 @@ class LinksRepository implements LinksRepositoryInterface
     }
 
     /**
+     * @param int $id
+     * @return LinkDto
+     * @throws UnknownProperties
+     */
+    public function find(int $id): LinkDto
+    {
+        /** @var Link $link */
+        $link = Link::findOrFail($id);
+        return $link->dto($this->parseTags($link->tags));
+    }
+
+    /**
+     * @param Collection $tags
+     * @return array
+     */
+    private function parseTags(Collection $tags): array
+    {
+        return $tags->pluck('tag')->all();
+    }
+
+    /**
+     * @param string $code
+     * @return LinkDto
+     * @throws UnknownProperties
+     */
+    public function findByCode(string $code): LinkDto
+    {
+        /** @var Link $link */
+        $link = Link::query()
+            ->where('code', '=', $code)
+            ->firstOrFail();
+        return $link->dto($this->parseTags($link->tags));
+    }
+
+    /**
+     * @param int $id
+     * @return void
+     */
+    public function delete(int $id)
+    {
+        Link::find($id)->delete();
+    }
+
+    /**
+     * @param array $filter
+     * @return Collection
+     */
+    public function list(array $filter): Collection
+    {
+        $links = Link::filter($filter)
+            ->with('tags')
+            ->get();
+        $collection = new Collection();
+        foreach ($links as $link) {
+            $collection->add($link->dto($this->parseTags($link->tags)));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @param CreateLinksCollection $createLinksCollection
+     * @return LinksCollection
+     * @throws UnknownProperties
+     */
+    public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection
+    {
+        $links = [];
+        foreach ($createLinksCollection as $link) {
+            $links[] = $this->storeLink($link);
+        }
+
+        return new LinksCollection($links);
+    }
+
+    /**
      * @param CreateLinkDto $createLink
      * @return LinkDto
      * @throws UnknownProperties
@@ -116,21 +146,6 @@ class LinksRepository implements LinksRepositoryInterface
         $link->tags()->sync($tags);
 
         return $link->dto($tags->pluck('tag')->all());
-    }
-
-    /**
-     * @param CreateLinksCollection $createLinksCollection
-     * @return LinksCollection
-     * @throws UnknownProperties
-     */
-    public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection
-    {
-        $links = [];
-        foreach ($createLinksCollection as $link) {
-            $links[] = $this->storeLink($link);
-        }
-
-        return new LinksCollection($links);
     }
 
 }
