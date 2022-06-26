@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Requests;
 
@@ -13,7 +14,8 @@ class StatsRequest extends FormRequest
     {
         return [
             'fromDate' => 'date_format:Y-m-d',
-            'toDate' => 'date_format:Y-m-d'
+            'toDate' => 'date_format:Y-m-d',
+            'page' => 'integer',
         ];
     }
 

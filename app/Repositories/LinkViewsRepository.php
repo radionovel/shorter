@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Repositories;
 
@@ -7,8 +8,10 @@ use App\DTO\CreateLinkViewDto;
 use App\DTO\LinkStatDto;
 use App\DTO\LinkViewDto;
 use App\DTO\TotalStatDto;
+use App\Exceptions\LinkNotFound;
+use App\Models\Link;
 use App\Models\LinkView;
-use Illuminate\Support\Collection;
+use Carbon\CarbonImmutable;
 use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class LinkViewsRepository implements LinkViewsRepositoryInterface
@@ -48,24 +51,31 @@ class LinkViewsRepository implements LinkViewsRepositoryInterface
 
     /**
      * @param int $linkId
-     * @return Collection
+     * @param int $page
+     * @return array
+     *
+     * @throws LinkNotFound
      */
-    public function linkStats(int $linkId): Collection
+    public function linkStats(int $linkId, int $page): array
     {
+        if (null === Link::find($linkId)) {
+            throw new LinkNotFound();
+        }
+
         return LinkView::query()
             ->selectRaw('user_id, view_date as date, COUNT(id) as total_views, COUNT(DISTINCT user_id) as unique_views')
             ->where('link_id', '=', $linkId)
             ->groupByRaw('1, 2')
             ->orderBy('date', 'desc')
-            ->toBase()
+            ->forPage($page)
             ->get()
             ->map(function ($view) {
-                return new LinkStatDto([
-                    'date' => $view->date,
-                    'total_views' => $view->total_views,
-                    'unique_views' => $view->unique_views,
-                ]);
-            });
+                return new LinkStatDto(
+                    (int)$view->total_views,
+                    (int)$view->unique_views,
+                    CarbonImmutable::parse($view->date)->toDateTimeImmutable()
+                );
+            })->all();
     }
 
 }

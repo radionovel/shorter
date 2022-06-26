@@ -5,7 +5,7 @@ namespace App\Contracts\Repositories;
 use App\DTO\CreateLinkViewDto;
 use App\DTO\LinkViewDto;
 use App\DTO\TotalStatDto;
-use Illuminate\Support\Collection;
+use App\Exceptions\LinkNotFound;
 
 interface LinkViewsRepositoryInterface
 {
@@ -13,5 +13,12 @@ interface LinkViewsRepositoryInterface
 
     public function totalStats(array $filter): TotalStatDto;
 
-    public function linkStats(int $linkId): Collection;
+    /**
+     * @param int $linkId
+     * @param int $page
+     * @return array
+     *
+     * @throws LinkNotFound
+     */
+    public function linkStats(int $linkId, int $page): array;
 }

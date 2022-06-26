@@ -1,11 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Services;
 
 use App\Contracts\Repositories\LinksRepositoryInterface;
 use App\Contracts\Services\LinksServiceInterface;
 use App\DTO\CreateLinkDto;
-use App\DTO\CreateLinksCollection;
 use App\DTO\LinksCollection;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -14,25 +14,20 @@ use GuzzleHttp\Exception\GuzzleException;
 class LinksService implements LinksServiceInterface
 {
 
-    protected Client $httpClient;
-    protected LinksRepositoryInterface $linksRepository;
-
     /**
      * @param Client $httpClient
      * @param LinksRepositoryInterface $linksRepository
      */
-    public function __construct(Client $httpClient, LinksRepositoryInterface $linksRepository)
+    public function __construct(protected Client $httpClient, protected LinksRepositoryInterface $linksRepository)
     {
-        $this->httpClient = $httpClient;
-        $this->linksRepository = $linksRepository;
     }
 
     /**
-     * @param CreateLinksCollection $createLinksCollection
+     * @param array<CreateLinkDto> $createLinksCollection
      * @return LinksCollection|false
      * @throws GuzzleException
      */
-    public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection|bool
+    public function storeCollection(array $createLinksCollection): array|bool
     {
         if ($this->canStoreLinkCollection($createLinksCollection)) {
             return $this->linksRepository->storeCollection($createLinksCollection);
@@ -42,15 +37,14 @@ class LinksService implements LinksServiceInterface
     }
 
     /**
-     * @param CreateLinksCollection $createLinksCollection
+     * @param array<CreateLinkDto> $createLinksCollection
      * @return bool
      * @throws GuzzleException
      */
-    protected function canStoreLinkCollection(CreateLinksCollection $createLinksCollection): bool
+    protected function canStoreLinkCollection(array $createLinksCollection): bool
     {
         foreach ($createLinksCollection as $link) {
-            /** @var CreateLinkDto $link */
-            if (!$this->isCorrectUrl($link->long_url)) {
+            if (!$this->isCorrectUrl($link->getLongUrl())) {
                 return false;
             }
         }

@@ -1,30 +1,28 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
 use App\Contracts\Repositories\LinksRepositoryInterface;
 use App\Contracts\Repositories\LinkViewsRepositoryInterface;
 use App\Contracts\Services\LinksServiceInterface;
-use App\DTO\CreateLinkViewDto;
+use App\Exceptions\LinkNotFound;
+use App\Factories\LinkViewFactoryInterface;
 use App\Http\Requests\CreateLinksRequest;
 use App\Http\Requests\LinksRequest;
 use App\Http\Requests\PatchLinksRequest;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class LinksController extends Controller
 {
-    private LinksRepositoryInterface $linksRepository;
-
     /**
      * @param LinksRepositoryInterface $linksRepository
      */
-    public function __construct(LinksRepositoryInterface $linksRepository)
+    public function __construct(protected LinksRepositoryInterface $linksRepository)
     {
-        $this->linksRepository = $linksRepository;
     }
 
     /**
@@ -34,8 +32,8 @@ class LinksController extends Controller
      */
     public function store(CreateLinksRequest $request, LinksServiceInterface $linksService): JsonResponse
     {
-        if ($linksService->storeCollection($request->links())) {
-            return response()->json([], 201);
+        if ($ids = $linksService->storeCollection($request->links())) {
+            return response()->json($ids, 201);
         }
 
         return response()->json([], 422);
@@ -48,7 +46,12 @@ class LinksController extends Controller
      */
     public function patch(int $id, PatchLinksRequest $request): JsonResponse
     {
-        $this->linksRepository->update($id, $request->all());
+        try {
+            $this->linksRepository->update($id, $request->all());
+        } catch (LinkNotFound $exception) {
+            return response()->json(['message' => $exception->getMessage()], 404);
+        }
+
         return response()->json([]);
     }
 
@@ -58,7 +61,12 @@ class LinksController extends Controller
      */
     public function link(int $id): JsonResponse
     {
-        $link = $this->linksRepository->find($id);
+        try {
+            $link = $this->linksRepository->find($id);
+        } catch (LinkNotFound $exception) {
+            return response()->json(['message' => $exception->getMessage()], 404);
+        }
+
         return response()->json($link);
     }
 
@@ -86,19 +94,21 @@ class LinksController extends Controller
      * @param string $code
      * @param Request $request
      * @param LinkViewsRepositoryInterface $linkViewsRepository
+     * @param LinkViewFactoryInterface $factory
      * @return RedirectResponse
-     * @throws UnknownProperties
      */
-    public function go(string $code, Request $request, LinkViewsRepositoryInterface $linkViewsRepository): RedirectResponse
+    public function go(string $code,
+                       Request $request,
+                       LinkViewsRepositoryInterface $linkViewsRepository,
+                       LinkViewFactoryInterface $factory): RedirectResponse
     {
         $link = $this->linksRepository->findByCode($code);
-        $linkViewsRepository->storeView(new CreateLinkViewDto([
-            'link_id' => $link->id,
-            'user_id' => hash('sha3-256', $request->ip() . $request->userAgent()),
-            'view_date' => Carbon::now()->toDate(),
-            'user_ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]));
+        $linkView = $factory->create($link->id,
+            CarbonImmutable::now()->toDateTimeImmutable(),
+            $request->ip(),
+            $request->userAgent());
+
+        $linkViewsRepository->storeView($linkView);
         return response()->redirectTo($link->long_url);
     }
 }

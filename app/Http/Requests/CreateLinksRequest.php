@@ -1,9 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Requests;
 
 use App\DTO\CreateLinkDto;
-use App\DTO\CreateLinksCollection;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -11,18 +11,14 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class CreateLinksRequest extends FormRequest
 {
-
     /**
-     * @return CreateLinksCollection
-     * @throws \Spatie\DataTransferObject\Exceptions\UnknownProperties
+     * @return array<CreateLinkDto>
      */
-    public function links(): CreateLinksCollection
+    public function links(): array
     {
-        $links = [];
-        foreach ($this->links as $link) {
-            $links[] = new CreateLinkDto($link);
-        }
-        return new CreateLinksCollection($links);
+        return array_map(function (array $link) {
+            return new CreateLinkDto($link['long_url'], $link['title'], $link['tags']);
+        }, $this->links);
     }
 
     /**

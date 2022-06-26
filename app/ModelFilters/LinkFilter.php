@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\ModelFilters;
 
@@ -22,6 +23,28 @@ class LinkFilter extends ModelFilter
     public function tag(string $tag)
     {
         $this->related('tags', 'tag', '=', $tag);
+    }
+
+    /**
+     * @param $page
+     * @return void
+     */
+    public function page($page)
+    {
+        if ($page) {
+            $this->forPage($page);
+        }
+    }
+
+    /**
+     * @param $pageSize
+     * @return void
+     */
+    public function size($pageSize)
+    {
+        if ($pageSize) {
+            $this->limit($pageSize);
+        }
     }
 
 }

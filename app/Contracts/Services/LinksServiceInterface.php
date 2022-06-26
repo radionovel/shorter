@@ -2,9 +2,13 @@
 
 namespace App\Contracts\Services;
 
-use App\DTO\CreateLinksCollection;
+use App\DTO\CreateLinkDto;
 
 interface LinksServiceInterface
 {
-    public function storeCollection(CreateLinksCollection $createLinksCollection);
+    /**
+     * @param array<CreateLinkDto> $createLinksCollection
+     * @return mixed
+     */
+    public function storeCollection(array $createLinksCollection): mixed;
 }

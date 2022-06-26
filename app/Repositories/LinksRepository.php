@@ -1,12 +1,12 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Repositories;
 
 use App\Contracts\Repositories\LinksRepositoryInterface;
 use App\DTO\CreateLinkDto;
-use App\DTO\CreateLinksCollection;
 use App\DTO\LinkDto;
-use App\DTO\LinksCollection;
+use App\Exceptions\LinkNotFound;
 use App\Models\Link;
 use App\Models\Tag;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,8 +24,9 @@ class LinksRepository implements LinksRepositoryInterface
      */
     public function update(int $id, array $attributes)
     {
-        /** @var Link $link */
-        $link = Link::findOrFail($id);
+        if (null === $link = Link::find($id)) {
+            throw new LinkNotFound();
+        }
 
         if (!empty($attributes['tags'])) {
             $tags = $this->storeTags($attributes['tags']);
@@ -56,12 +57,14 @@ class LinksRepository implements LinksRepositoryInterface
     /**
      * @param int $id
      * @return LinkDto
-     * @throws UnknownProperties
+     * @throws UnknownProperties|LinkNotFound
      */
     public function find(int $id): LinkDto
     {
-        /** @var Link $link */
-        $link = Link::findOrFail($id);
+        if (null === $link = Link::find($id)) {
+            throw new LinkNotFound();
+        }
+
         return $link->dto($this->parseTags($link->tags));
     }
 
@@ -105,7 +108,7 @@ class LinksRepository implements LinksRepositoryInterface
     {
         $links = Link::filter($filter)
             ->with('tags')
-            ->get();
+            ->paginateFilter();
         $collection = new Collection();
         foreach ($links as $link) {
             $collection->add($link->dto($this->parseTags($link->tags)));
@@ -115,18 +118,15 @@ class LinksRepository implements LinksRepositoryInterface
     }
 
     /**
-     * @param CreateLinksCollection $createLinksCollection
-     * @return LinksCollection
+     * @param array<CreateLinkDto> $createLinksCollection
+     * @return array<LinkDto>
      * @throws UnknownProperties
      */
-    public function storeCollection(CreateLinksCollection $createLinksCollection): LinksCollection
+    public function storeCollection(array $createLinksCollection): array
     {
-        $links = [];
-        foreach ($createLinksCollection as $link) {
-            $links[] = $this->storeLink($link);
-        }
-
-        return new LinksCollection($links);
+        return array_map(function ($link) {
+            return $this->storeLink($link);
+        }, $createLinksCollection);
     }
 
     /**
@@ -137,15 +137,40 @@ class LinksRepository implements LinksRepositoryInterface
     public function storeLink(CreateLinkDto $createLink): LinkDto
     {
         $link = Link::create([
+            'status' => 'pending',
             'code' => Str::random(6),
-            'link' => $createLink->long_url,
-            'title' => $createLink->title,
+            'link' => $createLink->getLongUrl(),
+            'title' => $createLink->getTitle(),
         ]);
 
-        $tags = $this->storeTags($createLink->tags);
+        $tags = $this->storeTags($createLink->getTags());
         $link->tags()->sync($tags);
 
         return $link->dto($tags->pluck('tag')->all());
+    }
+
+    /**
+     * @throws LinkNotFound
+     */
+    public function setActive(int $linkId)
+    {
+        if(null === $link = Link::find($linkId)) {
+            throw new LinkNotFound();
+        }
+
+        $link->update(['status' => 'active']);
+    }
+
+    /**
+     * @throws LinkNotFound
+     */
+    public function setError(int $linkId)
+    {
+        if(null === $link = Link::find($linkId)) {
+            throw new LinkNotFound();
+        }
+
+        $link->update(['status' => 'error']);
     }
 
 }

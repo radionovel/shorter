@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Http\Requests;
 
@@ -13,7 +14,9 @@ class LinksRequest extends FormRequest
     {
         return [
             'title' => 'string',
-            'tag' => 'string'
+            'tag' => 'string',
+            'page' => 'integer',
         ];
     }
+
 }

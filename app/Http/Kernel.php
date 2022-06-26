@@ -35,7 +35,6 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
-        // \App\Http\Middleware\TrustHosts::class,
         TrustProxies::class,
         HandleCors::class,
         PreventRequestsDuringMaintenance::class,
@@ -54,14 +53,11 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             ShareErrorsFromSession::class,
-//            \App\Http\Middleware\VerifyCsrfToken::class,
             SubstituteBindings::class,
         ],
 
         'api' => [
             StartSession::class,
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-//            'throttle:api',
             SubstituteBindings::class,
         ],
     ];
