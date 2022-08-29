@@ -1,0 +1,88 @@
+{
+    "correct": {
+        "links": {
+            "long_url": "https://google.com",
+            "title": "Cool link to google",
+            "tags": [
+                "homepage",
+                "mylink"
+            ]
+        },
+        "response": 201
+    },
+    "wrong tag": {
+        "links": {
+            "long_url": "https://google.com",
+            "title": "Cool link to google",
+            "tags": "wrong tag"
+        },
+        "response": 422
+    },
+    "correct 2": {
+        "links": {
+            "long_url": "https://google.com",
+            "title": "Cool link to google"
+        },
+        "response": 201
+    },
+    "correct 3": {
+        "links": {
+            "long_url": "https://google.com"
+        },
+        "response": 201
+    },
+    "wrong url": {
+        "links": {
+            "long_url": "wrong url"
+        },
+        "response": 422
+    },
+    "empty url. only title": {
+        "links": {
+            "title": "Cool link to google"
+        },
+        "response": 422
+    },
+    "empty url. only tags": {
+        "links": {
+            "tags": [
+                "homepage",
+                "mylink"
+            ]
+        },
+        "response": 422
+    },
+    "correct as array": {
+        "links": [
+            {
+                "long_url": "https://google.com",
+                "title": "Cool link to google",
+                "tags": [
+                    "homepage",
+                    "mylink"
+                ]
+            },
+            {
+                "long_url": "https://yandex.ru"
+            },
+            {
+                "long_url": "https://vk.com"
+            }
+        ],
+        "response": 201
+    },
+    "wrong fist url": {
+        "links": [
+            {
+                "title": "Cool link to google"
+            },
+            {
+                "long_url": "https://yandex.ru"
+            },
+            {
+                "long_url": "https://vk.com"
+            }
+        ],
+        "response": 422
+    }
+}
